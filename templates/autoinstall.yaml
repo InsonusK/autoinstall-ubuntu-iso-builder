@@ -1,0 +1,122 @@
+# Required configuration
+# https://canonical-subiquity.readthedocs-hosted.com/en/latest/reference/autoinstall-reference.html
+# !!! IMPORTANT !!!
+# USE 4 SPACE instead of tab or somethong else
+autoinstall:
+    version: 1 # Defines the version of the autoinstall configuration, and is required for futureproofing; Currently, this must be set to "1".
+    identity: # Configures the initial user for the system
+        realname: "User Name"
+        username: login
+        # Generate a password hash with the `openssl passwd` command, and paste it here. This hash represents the password "Password".
+        # ChatGPT offer `openssl passwd -6 "my password"`
+        password: "5CDYLc7G0Qxi2" #root
+        hostname: ubuntu-srv
+
+# Optional configuration
+#    interactive-sections: # A list of configuration steps to still show during installation
+#        - network # For example, have the installer show the network screen, allowing you to change the defaults
+#    early-commands: # A list of commands to run before the installation starts; Default is none
+#        - wget -O /autoinstall.yaml $AUTOINSTALL.YAML_URL # For example, replace the current autoinstall configuration with one provided by a centralized server (be sure to replace $AUTOINSTALL.YAML_URL with the actual URL).
+    storage: # Specifies the partition layout to use; In this example, we'll configure a drive with LVM with full-disk encryption
+    # WARNING: THIS ERASES THE ENTIRE DISK!
+        layout:
+            name: lvm # DEFAULT
+            sizing-policy: all # Use the whole disk
+            #password: "Encryption Passphrase" # When this is specified, the installer sets up full-disk encryption with this passphrase on the target system.
+            match: # Specifies which disk to use, based on certain characteristics (not all of these need to be specified). This example uses the largest disk in the system, which is the default behaviour.
+#                model:
+#                vendor:
+#                path:
+#                id_path:
+#                devpath:
+#                serial:
+#                ssd:  # Can be either true or false
+                size: largest # Can be either largest or smallest
+    keyboard: # Sets the keyboard layout (DEFAULT)
+        layout: "us" # For example, US English (DEFAULT)
+        variant: "" # Sets the variant of the specified layout (if applicable) (DEFAULT)
+    locale: "en_US.UTF-8" # Sets the locale for the installed system. For example, US English with UTF-8 character encoding (DEFAULT).
+    timezone: "Etc/UTC" # Specifies the timezone. Default is "Etc/UTC", but this should be set to your local timezone.
+    refresh-installer: # Controls whether the installer updates to a new version before continuing, and if "true", which channel the update is downloaded from
+        update: true # Update the installer before proceeding with installation; Can be either true or false
+        channel: "stable/ubuntu-$REL" # Update from the stable channel (DEFAULT)
+    source: # Specifies the variant of Ubuntu to be installed
+        # Type of installation
+        # https://canonical-subiquity.readthedocs-hosted.com/en/latest/reference/autoinstall-reference.html#id
+        id: ubuntu-server-minimal # For example, the "Extended" installaion of Ubuntu Desktop; NOTE: THIS IS ONLY VALID ON THE UBUNTU DESKTOP ISO! Check the autoinstall configuration reference manual for valid values on other versions of Ubuntu.
+    network: # Provide a Netplan-formatted network configuration; Default is to use DHCP on Ethernet interfaces
+        version: 2 # Defines the version of the netplan configuration, and is required for futureproofing; Currently, this must be set to "2"
+        renderer: networkd
+        ethernets:
+            enp0s3:  # Замените на ваше реальное имя интерфейса
+                dhcp4: true  # Включаем DHCP для получения IP-адреса
+#        renderer: NetworkManager # Controls the backend netplan uses (networkd or NetworkManager)
+#        ethernets: # Configures wired network cards
+#            wired:
+#                match:
+#                    name: e* # Applies this configuration to ALL wired network cards in the system *To specify a particular interface, replace "e*" with the actual interface name (you can find this with the "ip a" command)
+#                dhcp4: false # This is an example of a manual IPv4 configuration (so we can assign our system a static IP)
+#                dhcp6: true # We will still automatically obtain the IPv6 configuration
+#                addresses: # Sets the IPv4 address of the system (MUST BE IN CIDR FORM)
+#                    - 192.168.0.2/24 # For example, set the IP address to 192.168.0.2; "/24" represents the subnet mask "255.255.255.0"
+#                nameservers: # Configures the DNS settings
+#                    addresses: # Let's use Cloudflare's DNS servers as an example
+#                        - 1.1.1.1
+#                        - 1.0.0.1
+#                        - 2606:4700:4700::1111
+#                        - 2606:4700:4700::1001
+#                routes: # Configures the default gateway
+#                    - to: default
+#                      via: 192.168.0.1 # Be sure to replace this with your actual gateway address (if different); You can check this on another computer connected to your network
+#        wifis: # Configures wireless network cards
+#            wireless:
+#                match:
+#                    name: w* # Applies this configuration to ALL wireless network cards in the system *To specify a particular interface, replace "w*" with the actual interface name (you can find this with the "ip a" command)
+#                dhcp4: true # This is an example of an automatic IP configuration with DHCP
+#                dhcp6: true
+#                access-points: # Configures wireless access points
+#                    "SSID": # Be sure to replace "SSID" with your actual network's SSID (in quotes)
+#                        password: "Wi-fi Password"
+    apt: # Specifies the apt configuration (used both during the install and on the installed system). Below is the default apt configuration, which you can tweak according to your needs:
+        preserve_sources_list: false
+        mirror-selection: # A list of sources for apt to use (DEFAULT)
+            primary:
+                - country-mirror # Automatically select your country's local mirror; NOTE: geoip must be "true" for this to work
+                - uri: "http://archive.ubuntu.com/ubuntu"
+                  arches: [i386, amd64]
+                - uri: "http://ports.ubuntu.com/ubuntu-ports"
+                  arches: [s390x, arm64, armhf, powerpc, ppc64el, riscv64]
+        fallback: abort # Controls what the installer does when no primary mirror is usable; In this example, the installer will abort the installation when no primary mirror is usable (DEFAULT)
+        geoip: true # DEFAULT (can be either true or false)
+#    active-directory: # Configure an Active Directory domain
+#        admin-name:
+#        domain-name:
+#    ubuntu-pro: # Provide a valid contract token (from ubuntu.com/pro/dashboard) to enable Ubuntu Pro on the installed system
+#        token: C1NWcZTHLteJXGVMM6YhvHDpGrhyy7 # NOTE: This is NOT a valid contract token!
+    ssh: # DEFAULT
+        install-server: true # Choose whether or not to install openssh-server (can be either true or false) (DEFAULT)
+        authorized-keys: # Provide an SSH public key(s) to install in the initial user account; Default is none
+            - ssh-ed25519 .... # Your SSH public key
+        allow-pw: false # Choose whether or not to allow password authentication over SSH (can be either true or false) (DEFAULT)
+#    codecs: # Choose whether to install the ubuntu-restricted-addons package
+#        install: true # Can be either true or false
+#    drivers: # Choose whether to install third-party drivers
+#        install: true # Can be either true or false
+#    packages: # Provide a list of packages to install on the installed system; Default is none
+#        - cmatrix # For example, install cmatrix
+#    snaps: # Provide a list of snaps to install on the installed system; Default is none. In this example, we'll install the hello-world snap from the stable channel with strict confinement.
+#        - name: hello-world
+#          channel: stable # Choose which channel to install the snap from (stable, candidate, beta, or edge) (DEFAULT)
+#          classic: false # Choose whether or not to use classic confinement (can be either true or false) (DEFAULT)
+#    kernel: # Specify which kernel to install
+#        package:  # Install a specific kernel package
+#        flavour:  # Install a particular kernel flavour
+    updates: all # Controls the type of updates that will be downloaded and installed after system installation; Can be either "security" (for security updates only) or "all" (for all updates, like in this example).
+    shutdown: reboot # Controls whether to reboot or poweroff the system after installation (DEFAULT)
+#    late-commands: # A list of commands to run after the installation has completed successfully; Default is none
+#        - while [ ! -f /run/finish ]; do sleep 1; done # For example, pause the installation just before finishing to allow manual inspection/modification (unpause by creating the "/run/finish" file)
+    error-commands: # A list of commands to run after the installation has failed.
+        - tar -czf /installer-logs.tar.gz /var/log/installer # For example, collect installer logs in /var/log/installer
+        - journalctl -b > /installer-journal.log # Collect the live system journal too
+    kernel-crash-dumps: # Choose whether to enable kernel crash dumps
+        enabled: false # Can be true, false, or null (DEFAULT); NOTE: Default behaviour in Ubuntu 24.10 and later is to enable kernel crash dumps dynamically.
