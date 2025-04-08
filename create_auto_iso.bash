@@ -39,13 +39,14 @@ echo "===Переносим [BOOT] из source-files, убирая [ ] (для �
 mv "${TMP_PATH}/source-files/[BOOT]" "${TMP_PATH}/BOOT"
 
 echo "===Копируем autoinstall.yaml==="
-mkdir -p "${NEW_ISO_FOLDER_PATH}/nocloud"
-touch "${NEW_ISO_FOLDER_PATH}/nocloud/meta-data"
-cp $AUTO_INSTALL_YAML_PATH "${NEW_ISO_FOLDER_PATH}/nocloud/user-data"
+#mkdir -p "${NEW_ISO_FOLDER_PATH}/nocloud"
+#touch "${NEW_ISO_FOLDER_PATH}/nocloud/meta-data"
+#cp $AUTO_INSTALL_YAML_PATH "${NEW_ISO_FOLDER_PATH}/nocloud/user-data"
+cp $AUTO_INSTALL_YAML_PATH "${NEW_ISO_FOLDER_PATH}/autoinstall.yaml"
 
 echo "===Копируем grub.cfg в нужное место==="
-if [ -f "${ROOT_DIR}/config/grub.cfg" ]; then
-    cp "${ROOT_DIR}/config/grub.cfg" "${NEW_ISO_FOLDER_PATH}/boot/grub/grub.cfg"
+if [ -f "${ROOT_DIR}/templates/grub.cfg" ]; then
+    cp "${ROOT_DIR}/templates/grub.cfg" "${NEW_ISO_FOLDER_PATH}/boot/grub/grub.cfg"
 else
     echo "grub.cfg not found, skipping grub configuration"
 fi
