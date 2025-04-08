@@ -39,8 +39,9 @@ echo "===Переносим [BOOT] из source-files, убирая [ ] (для �
 mv "${TMP_PATH}/source-files/[BOOT]" "${TMP_PATH}/BOOT"
 
 echo "===Копируем autoinstall.yaml==="
-mkdir -p "${NEW_ISO_FOLDER_PATH}/nocloud/user-data"
-cp $AUTO_INSTALL_YAML_PATH "${NEW_ISO_FOLDER_PATH}/nocloud/user-data/autoinstall.yaml"
+mkdir -p "${NEW_ISO_FOLDER_PATH}/nocloud"
+touch "${NEW_ISO_FOLDER_PATH}/nocloud/meta-data"
+cp $AUTO_INSTALL_YAML_PATH "${NEW_ISO_FOLDER_PATH}/nocloud/user-data"
 
 echo "===Копируем grub.cfg в нужное место==="
 if [ -f "${ROOT_DIR}/config/grub.cfg" ]; then
@@ -58,23 +59,29 @@ xorriso -indev $ISO_PATH -report_el_torito as_mkisofs > "${BUILD_SCRIPT_PATH}"
 {
     # Добавляем строку xorriso -as mkisofs -r в начало файла
     echo "xorriso -as mkisofs -r \\"
-    echo "-o ${ROOT_DIR}/result/${AUTO_ISO_NAME}.iso \\"
+    echo "-o autoinstall-ubuntu.iso \\"
     # Читаем оригинальный скрипт построчно
     while IFS= read -r line; do
         # После строки `-V 'Ubuntu-Server 24.10 amd64'` добавляем `-o autoinstall-ubuntu.iso`
         if [[ "$line" == *"--grub2-mbr"* ]]; then
             # Убираем `--interval:local_fs:0s-15s:zero_mbrpt,zero_gpt:'ubuntu-24.10-live-server-amd64.iso'`
-            echo "--grub2-mbr ${TMP_PATH}/BOOT/1-Boot-NoEmul.img \\"
+            echo "--grub2-mbr BOOT/1-Boot-NoEmul.img \\"
         elif [[ "$line" == -append_partition* ]]; then
             # Убираем все после `--` и добавляем `BOOT/2-Boot-NoEmul.img \\`
-            echo "$line" | sed 's/ --.*//g' | sed 's/$/ ${TMP_PATH}\/BOOT\/2-Boot-NoEmul.img \\/'
+            echo "$line" | sed 's/ --.*//g' | sed 's/$/ BOOT\/2-Boot-NoEmul.img \\/'
         else
             # Для остальных строк добавляем `\\` в конце
             echo "$line \\"
         fi
     done < "$BUILD_SCRIPT_PATH"
-    echo "${NEW_ISO_FOLDER_PATH}"
+    echo "source-files"
 } > "$SCRIPT_PATH"
 
 echo "===Запускаем сборку ${AUTO_ISO_NAME}.iso==="
+pushd $TMP_PATH > /dev/null
 bash $SCRIPT_PATH
+popd > /dev/null
+
+echo "===Перемещаяем autoinstall-ubuntu.iso==="
+echo "tmp/${AUTO_ISO_TMP_DIR_NAME}/autoinstall-ubuntu.iso > result/${AUTO_ISO_NAME}.iso"
+mv "${TMP_PATH}/autoinstall-ubuntu.iso" "${ROOT_DIR}/result/${AUTO_ISO_NAME}.iso"
